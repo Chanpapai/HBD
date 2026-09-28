@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabaseClient";
 import BigButton from "@/components/BigButton";
 import WishCard from "@/components/WishCard";
 import ConfettiBurst from "@/components/ConfettiBurst";
+import WishModal from "@/components/WishModal";
 import BottomNav from "@/components/BottomNav";
 import ProfileCutouts from "@/components/ProfileCutouts";
 import FallingPhotos from "@/components/FallingPhotos";
@@ -26,13 +27,13 @@ export default function HomePage() {
   const [settings, setSettings] = useState({
     hero_title: DEFAULT_TITLE,
     hero_subtitle: DEFAULT_SUBTITLE,
-    hero_photo_url: null,
     owner_full_name: DEFAULT_OWNER_NAME,
     owner_nickname: DEFAULT_OWNER_NICKNAME,
     owner_birth_year_be: DEFAULT_OWNER_BIRTH_YEAR_BE,
   });
   const [wishes, setWishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [openWish, setOpenWish] = useState(null);
   // รูปบุคคลพื้นหลังโปร่งใสจากโฟลเดอร์ /public/profile (สแกนอัตโนมัติตอน build)
   const [profileImages, setProfileImages] = useState([]);
 
@@ -49,9 +50,8 @@ export default function HomePage() {
       const [{ data: settingsRows }, { data: wishRows }] = await Promise.all([
         supabase.from("settings").select("key,value"),
         supabase
-          .from("wishes")
-          .select("id,nickname,message,photo_url,created_at")
-          .eq("status", "approved")
+          .from("public_wishes") // view สาธารณะ: ไม่มีชื่อจริงของคนที่เลือกไม่ระบุชื่อ
+          .select("id,display_name,message,photo_url,created_at")
           .order("created_at", { ascending: false })
           .limit(60),
       ]);
@@ -83,28 +83,7 @@ export default function HomePage() {
       <div className="relative z-10">
 
       <section className="pt-10 px-6 flex flex-col items-center text-center">
-        {profileImages.length > 0 ? (
-          // รูปบุคคล PNG พื้นหลังโปร่งใส — ไม่มีวงกลม ไม่มีกรอบ
-          <ProfileCutouts images={profileImages.slice(0, 2)} />
-        ) : (
-          // ยังไม่มีรูปใน /public/profile → แสดงวงแหวน Placeholder (หรือรูปหน้าปกจาก Admin)
-          <div className="hero-ring w-[168px] h-[168px] rounded-full p-1 animate-floaty shadow-pink">
-            <div className="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center">
-              {settings.hero_photo_url ? (
-                <img
-                  src={settings.hero_photo_url}
-                  alt="เจ้าของวันเกิด"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-pink-soft">
-                  <span className="text-5xl">🎂</span>
-                  <span className="text-[11px] text-plum/50 font-body">ยังไม่ได้ใส่รูป</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <ProfileCutouts images={profileImages.slice(0, 2)} />
 
         <h1 className="font-display font-extrabold text-3xl mt-6 leading-tight">
           {settings.hero_title || DEFAULT_TITLE}
@@ -167,13 +146,14 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 gap-3">
           {wishes.map((w) => (
-            <WishCard key={w.id} nickname={w.nickname} message={w.message} photo={w.photo_url} />
+            <WishCard key={w.id} name={w.display_name} message={w.message} photo={w.photo_url} onOpen={() => setOpenWish(w)} />
           ))}
         </div>
       </section>
 
       </div>
 
+      <WishModal wish={openWish} onClose={() => setOpenWish(null)} />
       <BottomNav />
     </main>
   );

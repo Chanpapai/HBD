@@ -42,6 +42,7 @@ export default function WishPage() {
   const router = useRouter();
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState("");
   const [fileError, setFileError] = useState("");
@@ -92,6 +93,7 @@ export default function WishPage() {
         message: message.trim().slice(0, MAX_MESSAGE),
         status: "approved", // แสดงบนหน้าแรกทันที
         photo_url: photoUrl,
+        is_anonymous: anonymous, // ชื่อจริงเก็บภายใน แต่หน้าเว็บสาธารณะแสดงเป็น "ไม่ระบุชื่อ"
       });
       if (error) throw error;
     } catch (err) {
@@ -126,6 +128,19 @@ export default function WishPage() {
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <span className="text-sm font-semibold text-plum/70">การแสดงชื่อบนหน้าเว็บ</span>
+            <div className="grid grid-cols-2 gap-2">
+              {[[false, "🙂 ระบุชื่อ"], [true, "🕶️ ไม่ระบุชื่อ"]].map(([v, label]) => (
+                <button key={label} type="button" onClick={() => setAnonymous(v)}
+                  className={`tap-target py-2.5 rounded-2xl text-sm font-semibold border ${anonymous === v ? "bg-pink text-white border-pink" : "bg-white text-plum/70 border-pink-soft"}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {anonymous && <p className="text-xs text-plum/50">หน้าเว็บจะแสดงเป็น “ไม่ระบุชื่อ” ไม่โชว์ชื่อของคุณต่อสาธารณะ</p>}
+          </div>
+
           <label className="flex flex-col gap-1">
             <span className="text-sm font-semibold text-plum/70">ชื่อ / ชื่อเล่นของคุณ</span>
             <input value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={60} required placeholder="เช่น ปูเป้"

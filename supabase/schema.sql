@@ -106,7 +106,6 @@ create policy "settings_admin_update"
 insert into settings (key, value) values
   ('hero_title', 'Happy Birthday to Me 🎂'),
   ('hero_subtitle', 'ขอบคุณทุกคนที่แวะมาฉลองวันพิเศษนี้ด้วยกันนะ 🎉'),
-  ('hero_photo_url', ''),
   ('qr_url', ''),
   ('payment_note', ''),
   ('owner_full_name', 'นาย ปรเมศ ชาญป่าไพร'),

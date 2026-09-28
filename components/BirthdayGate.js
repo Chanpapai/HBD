@@ -8,7 +8,7 @@ import ConfettiBurst from "./ConfettiBurst";
 const BIRTH_MONTH = 9; // กันยายน
 const BIRTH_DAY = 29;
 const WINDOW_MS = 30 * 864e5; // แสดง Countdown เฉพาะช่วง 30 วันก่อนวันเกิด
-const CELEBRATE_MS = 7000; // ความยาวช่วงพลุ
+const CELEBRATE_MS = 4000; // ความยาวช่วงพลุ
 
 const bkkYear = (ms) =>
   Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Bangkok", year: "numeric" }).format(ms));
@@ -83,7 +83,7 @@ export default function BirthdayGate({ children }) {
 
   useEffect(() => {
     if (phase !== "celebrate") return;
-    const b = setInterval(() => setBursts((n) => n + 1), 1400);
+    const b = setInterval(() => setBursts((n) => n + 1), 1000);
     const done = setTimeout(() => {
       if (ref.current.demo) history.replaceState(null, "", location.pathname);
       setFadeIn(true);

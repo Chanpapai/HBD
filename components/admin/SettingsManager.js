@@ -7,7 +7,6 @@ import { safeStoragePath } from "@/lib/storagePath";
 const KEYS = [
   "hero_title",
   "hero_subtitle",
-  "hero_photo_url",
   "qr_bank_url",
   "qr_truemoney_url",
   "gift_bank_text",
@@ -118,30 +117,6 @@ export default function SettingsManager() {
           inputMode="numeric"
         />
       </label>
-
-      <div className="flex flex-col gap-1 text-sm">
-        <span className="font-semibold text-plum/70">รูปหน้าปก (วงกลม)</span>
-        <div className="flex items-center gap-3">
-          {values.hero_photo_url && (
-            <img
-              src={values.hero_photo_url}
-              alt=""
-              className="w-14 h-14 rounded-full object-cover border border-pink-soft"
-            />
-          )}
-          <label className="tap-target text-xs font-semibold bg-pink-soft px-3 py-2 rounded-full cursor-pointer">
-            เลือกรูป
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              className="hidden"
-              onChange={(e) =>
-                e.target.files[0] && uploadTo("gallery", e.target.files[0], "hero_photo_url")
-              }
-            />
-          </label>
-        </div>
-      </div>
 
       {/* ===== ของขวัญ: QR 2 รายการแยกกัน ===== */}
       <div className="rounded-2xl border border-pink-soft p-3 flex flex-col gap-3">

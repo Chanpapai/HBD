@@ -36,7 +36,7 @@ export default function WishManager() {
     // (รันไฟล์ supabase/fix_v2.sql ถ้ายังไม่เคยรัน)
     const { data, error: qError } = await supabase
       .from("wishes")
-      .select("id,nickname,message,photo_url,status,created_at")
+      .select("id,nickname,message,photo_url,is_anonymous,status,created_at")
       .order("created_at", { ascending: false });
 
     if (qError) {
@@ -157,10 +157,10 @@ export default function WishManager() {
       <div className="flex flex-col gap-2">
         {filtered.map((w) => (
           <div key={w.id} className="border border-pink-soft rounded-xl p-3 flex flex-col gap-2">
-            {w.photo_url && <img src={w.photo_url} alt="" className="rounded-lg max-h-40 object-cover self-start" />}
+            {w.photo_url && <img src={w.photo_url} alt="" className="rounded-lg max-h-40 object-contain self-start bg-pink-soft/40" />}
             <p className="text-sm whitespace-pre-line break-words">{w.message}</p>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-xs font-semibold text-pink-deep break-words">— {w.nickname}</span>
+              <span className="text-xs font-semibold text-pink-deep break-words">— {w.nickname}{w.is_anonymous ? " · 🕶️ เลือกไม่ระบุชื่อ (หน้าเว็บแสดง “ไม่ระบุชื่อ”)" : ""}</span>
               <span
                 className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full ${
                   w.status === "approved" ? "bg-mint/50 text-plum" : "bg-gold/40 text-plum"
