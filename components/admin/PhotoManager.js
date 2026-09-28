@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { safeStoragePath } from "@/lib/storagePath";
 
 const ACCEPTED = ["image/jpeg", "image/png", "image/webp"];
 
@@ -35,7 +36,7 @@ export default function PhotoManager() {
         setError("รองรับเฉพาะไฟล์ JPG, PNG, WebP เท่านั้น");
         continue;
       }
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}-${file.name}`;
+      const path = safeStoragePath(file);
       const { error: uploadError } = await supabase.storage
         .from("gallery")
         .upload(path, file, { cacheControl: "3600", upsert: false });

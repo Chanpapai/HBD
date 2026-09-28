@@ -1,34 +1,38 @@
 // ============================================================
-// สร้างรายการรูปภาพจากโฟลเดอร์ /public/gallery โดยอัตโนมัติ
-// รันทุกครั้งก่อน build (ดูใน package.json สคริปต์ "prebuild")
-// เจ้าของเว็บแค่ก็อปรูปใส่โฟลเดอร์นี้แล้ว deploy ใหม่ — ไม่ต้องแก้โค้ดเอง
+// สแกนโฟลเดอร์รูปภาพอัตโนมัติ แล้วสร้างไฟล์รายการ (manifest) ให้หน้าเว็บอ่าน
+// รันทุกครั้งก่อน build (ผูกไว้กับสคริปต์ "prebuild" ใน package.json)
+//
+//   public/gallery/  → public/gallery-manifest.json  (หน้า Gallery)
+//   public/profile/  → public/profile-manifest.json  (รูปบุคคล PNG พื้นหลังโปร่งใส
+//                                                     หน้าแรก + ฝนรูปลอยลงมา)
+//
+// เจ้าของเว็บแค่ก็อปรูปใส่โฟลเดอร์แล้ว deploy ใหม่ — ไม่ต้องแก้โค้ดเอง
 // ============================================================
 const fs = require("fs");
 const path = require("path");
 
-const GALLERY_DIR = path.join(process.cwd(), "public", "gallery");
-const OUTPUT_FILE = path.join(process.cwd(), "public", "gallery-manifest.json");
 const ALLOWED_EXT = [".jpg", ".jpeg", ".png", ".webp"];
+const collator = new Intl.Collator("en", { numeric: true });
 
-function main() {
-  if (!fs.existsSync(GALLERY_DIR)) {
-    fs.mkdirSync(GALLERY_DIR, { recursive: true });
-  }
+function scan(folderName, manifestName) {
+  const dir = path.join(process.cwd(), "public", folderName);
+  const output = path.join(process.cwd(), "public", manifestName);
+
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   const files = fs
-    .readdirSync(GALLERY_DIR)
+    .readdirSync(dir)
     .filter((f) => ALLOWED_EXT.includes(path.extname(f).toLowerCase()))
-    .sort();
+    .sort((a, b) => collator.compare(a, b));
 
   const manifest = files.map((filename) => ({
     filename,
-    url: `/gallery/${encodeURIComponent(filename)}`,
+    url: `/${folderName}/${encodeURIComponent(filename)}`,
   }));
 
-  fs.writeFileSync(OUTPUT_FILE, JSON.stringify(manifest, null, 2));
-  console.log(
-    `[gallery-manifest] พบรูป ${manifest.length} ไฟล์ในโฟลเดอร์ /public/gallery — เขียนไฟล์ ${OUTPUT_FILE}`
-  );
+  fs.writeFileSync(output, JSON.stringify(manifest, null, 2));
+  console.log(`[manifest] /public/${folderName}: พบรูป ${manifest.length} ไฟล์ → ${manifestName}`);
 }
 
-main();
+scan("gallery", "gallery-manifest.json");
+scan("profile", "profile-manifest.json");

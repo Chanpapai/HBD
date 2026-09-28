@@ -13,6 +13,7 @@ export default function WishPage() {
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  const [errorDetail, setErrorDetail] = useState("");
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -26,10 +27,17 @@ export default function WishPage() {
     });
 
     if (error) {
-      console.error(error);
+      console.error("[wish] บันทึกคำอวยพรไม่สำเร็จ:", error);
+      // แปลข้อความ error เป็นภาษาที่เข้าใจง่าย
+      const raw = error.message || "";
+      let friendly = "ระบบขัดข้องชั่วคราว ลองใหม่อีกครั้ง";
+      if (/failed to fetch|network/i.test(raw)) friendly = "เชื่อมต่ออินเทอร์เน็ตไม่ได้ ตรวจสัญญาณแล้วลองใหม่";
+      else if (/row-level security|violates|permission/i.test(raw)) friendly = "ไม่มีสิทธิ์บันทึก (ตั้งค่าฐานข้อมูลยังไม่ครบ) แจ้งเจ้าของเว็บด้วยนะ";
+      setErrorDetail(friendly);
       setStatus("error");
       return;
     }
+    setErrorDetail("");
     setStatus("sent");
     setNickname("");
     setMessage("");
@@ -92,7 +100,7 @@ export default function WishPage() {
 
           {status === "error" && (
             <p className="text-sm text-red-500">
-              ส่งไม่สำเร็จ ลองใหม่อีกครั้งนะ
+              ❌ ส่งไม่สำเร็จ: {errorDetail || "ลองใหม่อีกครั้งนะ"}
             </p>
           )}
 

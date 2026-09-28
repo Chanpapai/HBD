@@ -2,13 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { safeStoragePath } from "@/lib/storagePath";
 
 const KEYS = [
   "hero_title",
   "hero_subtitle",
   "hero_photo_url",
-  "qr_url",
-  "payment_note",
+  "qr_bank_url",
+  "qr_truemoney_url",
+  "gift_bank_text",
+  "gift_truemoney_text",
   "owner_full_name",
   "owner_nickname",
   "owner_birth_year_be",
@@ -43,11 +46,11 @@ export default function SettingsManager() {
     const rows = KEYS.map((key) => ({ key, value: values[key] ?? "" }));
     const { error } = await supabase.from("settings").upsert(rows, { onConflict: "key" });
     setSaving(false);
-    setSavedMsg(error ? "บันทึกไม่สำเร็จ" : "บันทึกเรียบร้อย ✅");
+    setSavedMsg(error ? "❌ บันทึกไม่สำเร็จ: " + error.message : "✅ บันทึกเรียบร้อย");
   }
 
   async function uploadTo(bucket, file, key) {
-    const path = `${Date.now()}-${file.name}`;
+    const path = safeStoragePath(file);
     const { error } = await supabase.storage.from(bucket).upload(path, file, {
       upsert: false,
     });
@@ -57,6 +60,7 @@ export default function SettingsManager() {
     }
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     setField(key, data.publicUrl);
+    setSavedMsg("อัปโหลดรูปแล้ว — กด “บันทึกทั้งหมด” เพื่อใช้งานจริง");
   }
 
   return (
@@ -139,42 +143,67 @@ export default function SettingsManager() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-1 text-sm">
-        <span className="font-semibold text-plum/70">QR Code รับของขวัญ</span>
+      {/* ===== ของขวัญ: QR 2 รายการแยกกัน ===== */}
+      <div className="rounded-2xl border border-pink-soft p-3 flex flex-col gap-3">
+        <p className="font-display font-bold text-sm">🏦 QR สแกนธนาคาร</p>
         <div className="flex items-center gap-3">
-          {values.qr_url && (
-            <img
-              src={values.qr_url}
-              alt=""
-              className="w-14 h-14 rounded-lg object-cover border border-pink-soft"
-            />
-          )}
+          <img
+            src={values.qr_bank_url || "/qr/bank-qr.jpeg"}
+            alt=""
+            className="w-16 h-16 rounded-lg object-cover border border-pink-soft bg-white"
+          />
           <label className="tap-target text-xs font-semibold bg-pink-soft px-3 py-2 rounded-full cursor-pointer">
-            เลือกรูป QR
+            เปลี่ยนรูป QR ธนาคาร
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp"
               className="hidden"
               onChange={(e) =>
-                e.target.files[0] && uploadTo("qr", e.target.files[0], "qr_url")
+                e.target.files[0] && uploadTo("qr", e.target.files[0], "qr_bank_url")
               }
             />
           </label>
         </div>
+        <textarea
+          value={values.gift_bank_text || ""}
+          onChange={(e) => setField("gift_bank_text", e.target.value)}
+          rows={2}
+          className="rounded-xl border border-pink-soft px-3 py-2 text-sm resize-none"
+          placeholder="พร้อมเพย์ / TrueMoney: 0645742422"
+        />
       </div>
 
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="font-semibold text-plum/70">
-          หมายเหตุการรับของขวัญ (เช่น ชื่อบัญชี พร้อมเพย์ / TrueMoney)
-        </span>
+      <div className="rounded-2xl border border-pink-soft p-3 flex flex-col gap-3">
+        <p className="font-display font-bold text-sm">🧡 QR สแกน TrueMoney</p>
+        <div className="flex items-center gap-3">
+          <img
+            src={values.qr_truemoney_url || "/qr/truemoney-qr.png"}
+            alt=""
+            className="w-16 h-16 rounded-lg object-cover border border-pink-soft bg-white"
+          />
+          <label className="tap-target text-xs font-semibold bg-pink-soft px-3 py-2 rounded-full cursor-pointer">
+            เปลี่ยนรูป QR TrueMoney
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) =>
+                e.target.files[0] && uploadTo("qr", e.target.files[0], "qr_truemoney_url")
+              }
+            />
+          </label>
+        </div>
         <textarea
-          value={values.payment_note || ""}
-          onChange={(e) => setField("payment_note", e.target.value)}
-          rows={3}
-          className="rounded-xl border border-pink-soft px-3 py-2 resize-none"
-          placeholder="พร้อมเพย์: 08x-xxx-xxxx ชื่อ ..."
+          value={values.gift_truemoney_text || ""}
+          onChange={(e) => setField("gift_truemoney_text", e.target.value)}
+          rows={2}
+          className="rounded-xl border border-pink-soft px-3 py-2 text-sm resize-none"
+          placeholder="พร้อมเพย์ / TrueMoney: 0645742422"
         />
-      </label>
+      </div>
+      <p className="text-xs text-plum/50 -mt-2">
+        ถ้ายังไม่เปลี่ยนรูป เว็บจะใช้ QR เริ่มต้นที่ใส่ไว้ในโปรเจกต์ให้อัตโนมัติ
+      </p>
 
       <button
         onClick={saveAll}

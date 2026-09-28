@@ -43,3 +43,29 @@ html {
 .tap-target {
   -webkit-tap-highlight-color: transparent;
 }
+
+/* ============ ฝนรูป PNG ลอยลงมาช้า ๆ (หน้าแรก) ============ */
+@keyframes photo-fall {
+  0% {
+    transform: translate3d(0, -32vh, 0) rotate(var(--rot-start));
+  }
+  100% {
+    transform: translate3d(var(--sway), 118vh, 0) rotate(var(--rot-end));
+  }
+}
+
+.falling-photo {
+  position: absolute;
+  top: 0;
+  width: auto;
+  will-change: transform;
+  animation: photo-fall var(--dur, 28s) linear var(--delay, 0s) infinite;
+  filter: drop-shadow(0 6px 8px rgba(76, 63, 209, 0.18));
+}
+
+/* ผู้ใช้ที่ปิดการเคลื่อนไหวในเครื่อง: ซ่อนฝนรูปทั้งหมด */
+@media (prefers-reduced-motion: reduce) {
+  .falling-layer {
+    display: none;
+  }
+}

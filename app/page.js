@@ -8,6 +8,8 @@ import BigButton from "@/components/BigButton";
 import WishCard from "@/components/WishCard";
 import ConfettiBurst from "@/components/ConfettiBurst";
 import BottomNav from "@/components/BottomNav";
+import ProfileCutouts from "@/components/ProfileCutouts";
+import FallingPhotos from "@/components/FallingPhotos";
 
 const DEFAULT_TITLE = "Happy Birthday to Me 🎂";
 const DEFAULT_SUBTITLE = "ขอบคุณทุกคนที่แวะมาฉลองวันพิเศษนี้ด้วยกันนะ 🎉";
@@ -31,6 +33,16 @@ export default function HomePage() {
   });
   const [wishes, setWishes] = useState([]);
   const [loading, setLoading] = useState(true);
+  // รูปบุคคลพื้นหลังโปร่งใสจากโฟลเดอร์ /public/profile (สแกนอัตโนมัติตอน build)
+  const [profileImages, setProfileImages] = useState([]);
+
+  // รูปบุคคลพื้นหลังโปร่งใสจาก /public/profile — โหลดแยก ไม่รอฐานข้อมูล
+  useEffect(() => {
+    fetch("/profile-manifest.json")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((list) => setProfileImages((list || []).map((m) => m.url)))
+      .catch(() => setProfileImages([]));
+  }, []);
 
   useEffect(() => {
     async function load() {
@@ -52,6 +64,7 @@ export default function HomePage() {
         setSettings((prev) => ({ ...prev, ...merged }));
       }
       setWishes(wishRows || []);
+
       setLoading(false);
     }
     load();
@@ -64,28 +77,34 @@ export default function HomePage() {
 
   return (
     <main className="relative">
+      {/* ฝนรูป PNG ลอยลงมาช้า ๆ อยู่ด้านหลังเนื้อหา ไม่บังข้อความ/ปุ่ม */}
+      <FallingPhotos images={profileImages} />
       <ConfettiBurst />
+      <div className="relative z-10">
 
       <section className="pt-10 px-6 flex flex-col items-center text-center">
-        {/* วงแหวนไล่เฉดฟ้า-ม่วงรอบรูปหน้าปก — ถ้ายังไม่มีรูปจริงจะโชว์ Placeholder น่ารัก ๆ แทน */}
-        <div className="hero-ring w-[168px] h-[168px] rounded-full p-1 animate-floaty shadow-pink">
-          <div className="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center">
-            {settings.hero_photo_url ? (
-              <img
-                src={settings.hero_photo_url}
-                alt="เจ้าของวันเกิด"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-pink-soft">
-                <span className="text-5xl">🎂</span>
-                <span className="text-[11px] text-plum/50 font-body">
-                  ยังไม่ได้ใส่รูป
-                </span>
-              </div>
-            )}
+        {profileImages.length > 0 ? (
+          // รูปบุคคล PNG พื้นหลังโปร่งใส — ไม่มีวงกลม ไม่มีกรอบ
+          <ProfileCutouts images={profileImages} />
+        ) : (
+          // ยังไม่มีรูปใน /public/profile → แสดงวงแหวน Placeholder (หรือรูปหน้าปกจาก Admin)
+          <div className="hero-ring w-[168px] h-[168px] rounded-full p-1 animate-floaty shadow-pink">
+            <div className="w-full h-full rounded-full overflow-hidden bg-white flex items-center justify-center">
+              {settings.hero_photo_url ? (
+                <img
+                  src={settings.hero_photo_url}
+                  alt="เจ้าของวันเกิด"
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-1 bg-pink-soft">
+                  <span className="text-5xl">🎂</span>
+                  <span className="text-[11px] text-plum/50 font-body">ยังไม่ได้ใส่รูป</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         <h1 className="font-display font-extrabold text-3xl mt-6 leading-tight">
           {settings.hero_title || DEFAULT_TITLE}
@@ -152,6 +171,8 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      </div>
 
       <BottomNav />
     </main>
