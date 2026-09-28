@@ -1,4 +1,5 @@
 import "./globals.css";
+import BirthdayGate from "@/components/BirthdayGate";
 
 export const metadata = {
   title: "Happy Birthday to Me 🎂",
@@ -23,7 +24,7 @@ export default function RootLayout({ children }) {
         style={{ "--font-baloo": "'Mali', sans-serif", "--font-inter": "'Kanit', sans-serif" }}
       >
         <div className="mx-auto max-w-[480px] min-h-screen relative pb-10">
-          {children}
+          <BirthdayGate>{children}</BirthdayGate>
         </div>
       </body>
     </html>

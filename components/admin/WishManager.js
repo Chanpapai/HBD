@@ -24,7 +24,7 @@ function formatThaiDateTime(iso) {
 
 export default function WishManager() {
   const [wishes, setWishes] = useState([]);
-  const [filter, setFilter] = useState("pending");
+  const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState({ text: "", ok: true });
@@ -36,7 +36,7 @@ export default function WishManager() {
     // (รันไฟล์ supabase/fix_v2.sql ถ้ายังไม่เคยรัน)
     const { data, error: qError } = await supabase
       .from("wishes")
-      .select("id,nickname,message,status,created_at")
+      .select("id,nickname,message,photo_url,status,created_at")
       .order("created_at", { ascending: false });
 
     if (qError) {
@@ -71,12 +71,13 @@ export default function WishManager() {
       flash("❌ เปลี่ยนสถานะไม่สำเร็จ — ตรวจสิทธิ์แอดมิน (ดู fix_v2.sql)", false);
       return;
     }
-    flash(status === "approved" ? "✅ อนุมัติแล้ว — ขึ้นหน้าเว็บทันที" : "✅ ซ่อนคำอวยพรแล้ว");
+    flash(status === "approved" ? "👁️ แสดงแล้ว — ขึ้นหน้าเว็บทันที" : "✅ ซ่อนคำอวยพรแล้ว");
     load();
   }
 
   async function remove(id) {
     if (!confirm("ลบคำอวยพรนี้ใช่ไหม? (กู้คืนไม่ได้)")) return;
+    const target = wishes.find((x) => x.id === id);
     const { data, error: dError } = await supabase
       .from("wishes")
       .delete()
@@ -88,6 +89,8 @@ export default function WishManager() {
       flash("❌ ลบไม่สำเร็จ — ตรวจสิทธิ์แอดมิน", false);
       return;
     }
+    const key = target?.photo_url?.split("/wish-photos/")[1];
+    if (key) await supabase.storage.from("wish-photos").remove([decodeURIComponent(key)]);
     flash("✅ ลบคำอวยพรแล้ว");
     load();
   }
@@ -97,8 +100,8 @@ export default function WishManager() {
   const filtered = wishes.filter((w) => (filter === "all" ? true : w.status === filter));
 
   const tabs = [
-    { key: "pending", label: `รอตรวจ (${pendingCount})` },
-    { key: "approved", label: `อนุมัติแล้ว (${approvedCount})` },
+    { key: "pending", label: `ซ่อนอยู่ (${pendingCount})` },
+    { key: "approved", label: `แสดงอยู่ (${approvedCount})` },
     { key: "all", label: `ทั้งหมด (${wishes.length})` },
   ];
 
@@ -154,6 +157,7 @@ export default function WishManager() {
       <div className="flex flex-col gap-2">
         {filtered.map((w) => (
           <div key={w.id} className="border border-pink-soft rounded-xl p-3 flex flex-col gap-2">
+            {w.photo_url && <img src={w.photo_url} alt="" className="rounded-lg max-h-40 object-cover self-start" />}
             <p className="text-sm whitespace-pre-line break-words">{w.message}</p>
             <div className="flex items-center justify-between gap-2">
               <span className="text-xs font-semibold text-pink-deep break-words">— {w.nickname}</span>
@@ -162,7 +166,7 @@ export default function WishManager() {
                   w.status === "approved" ? "bg-mint/50 text-plum" : "bg-gold/40 text-plum"
                 }`}
               >
-                {w.status === "approved" ? "อนุมัติแล้ว" : "รอตรวจ"}
+                {w.status === "approved" ? "แสดงอยู่" : "ซ่อนอยู่"}
               </span>
             </div>
             <p className="text-[11px] text-plum/50">🕒 {formatThaiDateTime(w.created_at)}</p>
@@ -172,7 +176,7 @@ export default function WishManager() {
                   onClick={() => updateStatus(w.id, "approved")}
                   className="tap-target text-xs font-semibold bg-mint/50 px-3 py-1.5 rounded-full"
                 >
-                  ✅ อนุมัติ
+                  👁️ แสดง
                 </button>
               )}
               {w.status === "approved" && (

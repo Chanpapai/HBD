@@ -20,14 +20,14 @@ function shuffle(list) {
   return copy;
 }
 
-export default function FallingPhotos({ images = [], count = 10 }) {
+export default function FallingPhotos({ images = [], count = 18 }) {
   const [items, setItems] = useState([]);
 
   useEffect(() => {
     if (images.length === 0) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    const total = window.innerWidth < 640 ? Math.min(count, 7) : count;
+    const total = window.innerWidth < 640 ? Math.min(count, 12) : count;
     const pool = shuffle(images);
 
     // สุ่มหลังโหลดเสร็จ (ฝั่งเบราว์เซอร์เท่านั้น) เพื่อไม่ให้ HTML ฝั่งเซิร์ฟเวอร์ไม่ตรงกัน

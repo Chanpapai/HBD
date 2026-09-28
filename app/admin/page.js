@@ -63,6 +63,11 @@ export default function AdminDashboard() {
         </button>
       </div>
 
+      <a href="/?countdown_demo=10"
+        className="tap-target block bg-white border border-dashed border-violet-300 rounded-2xl px-4 py-3 text-sm font-semibold text-pink-deep">
+        🧪 ทดสอบ Countdown (เหลือ 10 วินาที → พลุ → หน้าเว็บปกติ) — เห็นเฉพาะแอดมิน
+      </a>
+
       <SettingsManager />
       <PhotoManager />
       <WishManager />

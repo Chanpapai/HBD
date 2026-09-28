@@ -50,7 +50,7 @@ export default function HomePage() {
         supabase.from("settings").select("key,value"),
         supabase
           .from("wishes")
-          .select("id,nickname,message,created_at")
+          .select("id,nickname,message,photo_url,created_at")
           .eq("status", "approved")
           .order("created_at", { ascending: false })
           .limit(60),
@@ -85,7 +85,7 @@ export default function HomePage() {
       <section className="pt-10 px-6 flex flex-col items-center text-center">
         {profileImages.length > 0 ? (
           // รูปบุคคล PNG พื้นหลังโปร่งใส — ไม่มีวงกลม ไม่มีกรอบ
-          <ProfileCutouts images={profileImages} />
+          <ProfileCutouts images={profileImages.slice(0, 2)} />
         ) : (
           // ยังไม่มีรูปใน /public/profile → แสดงวงแหวน Placeholder (หรือรูปหน้าปกจาก Admin)
           <div className="hero-ring w-[168px] h-[168px] rounded-full p-1 animate-floaty shadow-pink">
@@ -167,7 +167,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 gap-3">
           {wishes.map((w) => (
-            <WishCard key={w.id} nickname={w.nickname} message={w.message} />
+            <WishCard key={w.id} nickname={w.nickname} message={w.message} photo={w.photo_url} />
           ))}
         </div>
       </section>

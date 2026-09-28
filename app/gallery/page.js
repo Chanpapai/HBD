@@ -6,13 +6,30 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import BottomNav from "@/components/BottomNav";
-import { downloadImagesAsZip } from "@/lib/download";
+import { downloadManyImages } from "@/lib/download";
 import Link from "next/link";
+
+function HelpPopup({ onClose }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/60 flex items-center justify-center px-5" onClick={onClose}>
+      <div className="bg-white rounded-3xl p-5 max-w-sm w-full shadow-pink animate-popin" onClick={(e) => e.stopPropagation()}>
+        <p className="font-display font-bold text-lg text-center">💡 โหลดรูปไม่ได้?</p>
+        <p className="text-sm text-plum/80 text-center mt-2">
+          หากไม่สามารถโหลดรูปหรือบันทึกรูปได้ ให้ไปเอารูปจาก Instagram:{" "}
+          <b className="text-pink-deep">pv.kao29</b>
+        </p>
+        <img src="/ig-help.jpg" alt="Instagram pv.kao29" className="mt-3 rounded-2xl w-full border border-pink-soft" />
+        <button onClick={onClose} className="tap-target mt-4 w-full bg-gradient-to-r from-sky-400 to-violet-600 text-white font-display font-bold py-2.5 rounded-full">รับทราบ ปิด</button>
+      </div>
+    </div>
+  );
+}
 
 export default function GalleryPage() {
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedIndex, setSelectedIndex] = useState(null); // เปิดดูเต็มจอ
+  const [showHelp, setShowHelp] = useState(true); // แสดงทุกครั้งที่เข้าหน้านี้ ปิดแล้วไม่โผล่ซ้ำจนกว่าจะเข้าใหม่
   const [selectMode, setSelectMode] = useState(false);
   const [picked, setPicked] = useState(() => new Set());
   const [zipState, setZipState] = useState({ busy: false, done: 0, total: 0, msg: "", ok: true });
@@ -63,35 +80,19 @@ export default function GalleryPage() {
 
   const allSelected = photos.length > 0 && picked.size === photos.length;
 
-  async function runZip(list, label) {
+  async function runZip(list) {
     if (list.length === 0 || zipState.busy) return;
     setZipState({ busy: true, done: 0, total: list.length, msg: "", ok: true });
-    try {
-      const { count, failed } = await downloadImagesAsZip(
-        list.map((p) => p.url),
-        "birthday-photos.zip",
-        (done, total) => setZipState((s) => ({ ...s, done, total }))
-      );
-      setZipState({
-        busy: false,
-        done: 0,
-        total: 0,
-        ok: true,
-        msg:
-          failed > 0
-            ? `✅ ดาวน์โหลด birthday-photos.zip แล้ว (${count} รูป, โหลดไม่ได้ ${failed} รูป)`
-            : `✅ ดาวน์โหลด birthday-photos.zip แล้ว (${label} ${count} รูป)`,
-      });
-    } catch (err) {
-      console.error(err);
-      setZipState({
-        busy: false,
-        done: 0,
-        total: 0,
-        ok: false,
-        msg: `❌ ${err.message || "ดาวน์โหลดไม่สำเร็จ ลองใหม่อีกครั้ง"}`,
-      });
-    }
+    const { ok, failed } = await downloadManyImages(
+      list.map((p) => p.url),
+      (done, total) => setZipState((s) => ({ ...s, done, total }))
+    );
+    setZipState({
+      busy: false, done: 0, total: 0, ok: failed === 0,
+      msg: failed === 0
+        ? `✅ ดาวน์โหลดสำเร็จ ${ok} รูป (ถ้ามีหน้าต่างขออนุญาตดาวน์โหลดหลายไฟล์ ให้กด “อนุญาต”)`
+        : `⚠️ สำเร็จ ${ok} รูป ผิดพลาด ${failed} รูป — ลองใหม่อีกครั้ง หรือดูวิธีแก้ในหน้าต่างช่วยเหลือ`,
+    });
   }
 
   const pickedPhotos = photos.filter((p) => picked.has(p.id));
@@ -103,7 +104,7 @@ export default function GalleryPage() {
         <h1 className="font-display font-bold text-2xl">📸 แกลเลอรีรูปแฮป</h1>
       </div>
       <p className="text-sm text-plum/60 mb-4">
-        แตะรูปเพื่อดูเต็มจอและกดดาวน์โหลด หรือกด “เลือกหลายรูป” เพื่อโหลดเป็นไฟล์ ZIP
+        แตะรูปเพื่อดูเต็มจอและกดดาวน์โหลด หรือกด “เลือกหลายรูป” เพื่อโหลดทีละภาพหลายรูปพร้อมกัน
         รองรับ JPG, PNG, WebP
       </p>
 
@@ -118,7 +119,7 @@ export default function GalleryPage() {
                 ☑️ เลือกหลายรูป
               </button>
               <button
-                onClick={() => runZip(photos, "ทั้งหมด")}
+                onClick={() => runZip(photos)}
                 disabled={zipState.busy}
                 className="tap-target text-sm font-semibold bg-gradient-to-r from-sky-400 to-violet-600 text-white px-4 py-2 rounded-full shadow-pink disabled:opacity-60"
               >
@@ -149,7 +150,7 @@ export default function GalleryPage() {
       {zipState.busy && (
         <div className="mb-4 bg-white border border-pink-soft rounded-2xl px-4 py-3 text-sm">
           <p className="font-semibold text-plum">
-            กำลังเตรียมไฟล์ ZIP... {zipState.done}/{zipState.total}
+            ⏳ กำลังดาวน์โหลดรูป... {zipState.done}/{zipState.total}
           </p>
           <div className="mt-2 h-2 bg-pink-soft rounded-full overflow-hidden">
             <div
@@ -217,7 +218,7 @@ export default function GalleryPage() {
       {selectMode && (
         <div className="fixed bottom-[68px] left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 z-40">
           <button
-            onClick={() => runZip(pickedPhotos, "ที่เลือก")}
+            onClick={() => runZip(pickedPhotos)}
             disabled={picked.size === 0 || zipState.busy}
             className="tap-target w-full bg-gradient-to-r from-sky-400 to-violet-600 text-white font-display font-bold py-3 rounded-full shadow-pink disabled:opacity-50"
           >
@@ -233,6 +234,7 @@ export default function GalleryPage() {
         index={selectedIndex ?? 0}
         onClose={() => setSelectedIndex(null)}
       />
+      {showHelp && <HelpPopup onClose={() => setShowHelp(false)} />}
       <BottomNav />
     </main>
   );
